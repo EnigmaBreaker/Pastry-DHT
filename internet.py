@@ -76,5 +76,11 @@ class Internet:
 		self.ip_data[(x, y)] = node
 		return x, y
 
-	def sendmsg(self, ip, msg, key):
-		return self.ip_data[ip].route(msg, key)
+	def sendmsg(self, ip, msg, key, source_ip):
+		return self.ip_data[ip].route(msg, key, source_ip)
+
+	def sendRoutingTable(self, table, ip):
+		return self.ip_data[ip].getRoutingTable(table)
+
+	def sendLeafSet(self, ip, lessLeaf, moreLeaf, sourceip, sourcekey):
+		return self.ip_data[ip].getLeafSet(lessLeaf, moreLeaf, sourceip, sourcekey)
