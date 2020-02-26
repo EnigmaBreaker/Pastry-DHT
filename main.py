@@ -4,5 +4,4 @@ from pastry import Pastry
 
 
 if __name__ == "__main__":
-	internet = Internet(100)
-	
+	pastry = Pastry(100)
