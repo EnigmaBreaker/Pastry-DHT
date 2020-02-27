@@ -5,37 +5,41 @@ from helper import *
 
 
 class Node:
-	def __init__(self, b=4, l=32, L=16, M=16):
+	def __init__(self, b=4, l=8, L=16, M=16):
 		self.lessLeaf = [None]*(L//2)
 		self.moreLeaf = [None]*(L//2)
-		self.NeighbourSet = [None]*M
+		self.neighbourSet = [None]*M
 		self.routingTable = [[None]*(2**b) for x in range(l)]
 		self.table = {}
+
+	def print_arr(self, arr):
+		for x in arr:
+			if x == None:
+				print(x, end="     ")
+			else:
+				print(x[1], end=" ")
+		print()
 
 	def print_node(self):
 		print("||||||| --- Printing status of Node with IP: ({}, {}) and Key: {} --- |||||||".format(self.x, self.y, self.key))
 		print()
 		print("[@] Less Leaf")
-		print(self.lessLeaf)
+		self.print_arr(self.lessLeaf)
 		print()
 
 		print("[@] More Leaf")
-		print(self.moreLeaf)
-		# print()
-
-		# print("[@] Min Leaf: {}".format(self.minLeaf))
-		# print("[@] Max Leaf: {}".format(self.maxLeaf))
+		self.print_arr(self.moreLeaf)
 
 		print()
 
 		print("[@] Neighbour Set")
-		print(self.NeighbourSet)
+		print(self.neighbourSet)
 
 		print()
 
 		print("[@] Routing Table: ")
 		for x in self.routingTable:
-			print(x)
+			self.print_arr(x)
 
 		print()
 		print()
@@ -53,7 +57,7 @@ class Node:
 			if(x != None):
 				output.add(x)
 
-		for x in self.NeighbourSet:
+		for x in self.neighbourSet:
 			if(x != None):
 				output.add(x)
 
@@ -82,7 +86,7 @@ class Node:
 
 		if(minleaf == None and maxleaf == None):
 			self.sendLeafSet(source_ip)
-			print("Case 1")
+			# print("Case 1")
 			return
 
 		if(hextoint(minleaf[1]) <= hextoint(key) <= hextoint(maxleaf[1])):
@@ -105,7 +109,7 @@ class Node:
 
 			if(self.key == minkey[1]):
 				self.sendLeafSet(source_ip)
-				print("Case 2")
+				# print("Case 2")
 				return
 			else:
 				return self.internet.sendmsg(minkey[0], msg, key, source_ip)
@@ -118,11 +122,10 @@ class Node:
 				return self.internet.sendmsg(outkey[0], msg, key, source_ip)
 
 			else:
-				print("All availables: ", self.__allavailable(), l)
 				for t in self.__allavailable():
 					if(shl(t[1], key) >= l and abs(hextoint(t[1]) - hextoint(key)) < abs(hextoint(self.key) - hextoint(key))):
 						return self.internet.sendmsg(t[0], msg, key, source_ip)
-		print("Case 3 - Inside Node {} {}".format(self.x, self.y))
+		# print("Case 3 - Inside Node {} {}".format(self.x, self.y))
 		self.sendLeafSet(source_ip)
 		# return None
 
@@ -185,19 +188,87 @@ class Node:
 		# print("My Ip: {} {}".format(self.x, self.y))
 
 	def sendNeighbours(self):
-		return [x for x in self.NeighbourSet]
+		return [x for x in self.neighbourSet]
+
+	def sendState(self, ip):
+		temp_routing = []
+		for i, x in enumerate(self.routingTable):
+			temp_routing.append([y for y in x])
+			temp_routing[i][hextoint(self.key[i])] = ((self.x, self.y), self.key)
+
+		payload = {
+			"key" : self.key,
+			"ip" : (self.x, self.y),
+			"lessLeaf" : [x for x in self.lessLeaf],
+			"moreLeaf" : [x for x in self.moreLeaf],
+			"neighbourhoodSet" : [x for x in self.neighbourSet], 
+			"routingTable" : temp_routing
+		}
+
+		self.internet.sendState(ip, payload)
+
+	def updateRoutingTable(self, ip, key):
+		if(key != self.key):
+			l = shl(self.key, key)
+			j = hextoint(key[l])
+			if(self.routingTable[l][j] == None):
+				self.routingTable[l][j] = (ip, key)
+
+	def updateLeafSet(self, ip, key):
+
+		if None in self.lessLeaf:
+			ind = self.lessLeaf.index(None)
+			if(hextoint(self.key) > hextoint(key)):
+				self.lessLeaf[ind] = (ip, key)
+				return
+
+		if None in self.moreLeaf:
+			ind = self.moreLeaf.index(None)
+			if(hextoint(self.key) < hextoint(key)):
+				self.moreLeaf[ind] = (ip, key)
+				return
+
+		minLeaf, i1 = findmin(self.lessLeaf)
+		maxLeaf, i2 = findmax(self.moreLeaf)
+
+		if(minLeaf == None):
+			minLeaf, i1 = findmin(self.moreLeaf)
+
+		if(maxLeaf == None):
+			maxLeaf, i2 = findmax(self.lessLeaf)
+
+		if((minLeaf == None or hextoint(key) > hextoint(minLeaf[1])) and hextoint(self.key) > hextoint(key)):
+			self.lessLeaf[i2] = (ip, key)
+		
+		if((maxLeaf == None or hextoint(key) < hextoint(maxLeaf[1])) and hextoint(self.key) < hextoint(key)):
+			self.moreLeaf[i1] = (ip, key)
+
+
+
+	def getState(self, payload):
+		for x in payload["routingTable"]:
+			for y in x:
+				if(y != None):
+					self.updateRoutingTable(y[0], y[1])
+		
+		self.updateLeafSet(payload["ip"], payload["key"])
+		
+		
+		
 
 	def joinPastry(self):	
-		self.key = hmac.new(encode("my-secret"), msg=encode("{}, {}".format(self.x, self.y)), digestmod=md5).hexdigest()
+		self.key = hmac.new(encode("my-secret"), msg=encode("{}, {}".format(self.x, self.y)), digestmod=md5).hexdigest()[:8]
 		nearest_node = self.internet.getNearestNode(self.x, self.y)
 		if(nearest_node == None):
 			return 
-		self.NeighbourSet = self.internet.getNeighbours(nearest_node)
+		self.neighbourSet = self.internet.getNeighbours(nearest_node)
 
 		self.internet.sendmsg(nearest_node, "JOIN_{}".format(self.key), self.key, (self.x, self.y))
 
 		all_nodes = self.__allavailable()
-		
+
+		for node in all_nodes:
+			self.sendState(node[0])
 				
 
 

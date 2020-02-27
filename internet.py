@@ -84,3 +84,6 @@ class Internet:
 
 	def sendLeafSet(self, ip, lessLeaf, moreLeaf, sourceip, sourcekey):
 		return self.ip_data[ip].getLeafSet(lessLeaf, moreLeaf, sourceip, sourcekey)
+
+	def sendState(self, ip, payload):
+		return self.ip_data[ip].getState(payload)

@@ -4,4 +4,4 @@ from pastry import Pastry
 
 
 if __name__ == "__main__":
-	pastry = Pastry(100)
+	pastry = Pastry(500)
