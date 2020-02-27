@@ -79,15 +79,15 @@ class Node:
 		minleaf, ind = findmin(self.lessLeaf)
 		maxleaf, ind = findmax(self.moreLeaf)
 
-		if(minleaf == None):
-			minleaf, ind = findmin(self.moreLeaf)
-		if(maxleaf == None):
-			maxleaf, ind = findmax(self.lessLeaf)
-
 		if(minleaf == None and maxleaf == None):
 			self.sendLeafSet(source_ip)
 			# print("Case 1")
 			return
+
+		if(minleaf == None):
+			minleaf = ((self.x, self.y), self.key)
+		if(maxleaf == None):
+			maxleaf = ((self.x, self.y), self.key)
 
 		if(hextoint(minleaf[1]) <= hextoint(key) <= hextoint(maxleaf[1])):
 			mind = abs(hextoint(self.key) - hextoint(key))
@@ -231,25 +231,25 @@ class Node:
 		minLeaf, i1 = findmin(self.lessLeaf)
 		maxLeaf, i2 = findmax(self.moreLeaf)
 
-		if(minLeaf == None):
-			minLeaf, i1 = findmin(self.moreLeaf)
+		# if(minLeaf == None):
+		# 	minLeaf, i1 = findmin(self.moreLeaf)
 
-		if(maxLeaf == None):
-			maxLeaf, i2 = findmax(self.lessLeaf)
+		# if(maxLeaf == None):
+		# 	maxLeaf, i2 = findmax(self.lessLeaf)
 
 		if((minLeaf == None or hextoint(key) > hextoint(minLeaf[1])) and hextoint(self.key) > hextoint(key)):
-			self.lessLeaf[i2] = (ip, key)
+			self.lessLeaf[i1] = (ip, key)
 		
 		if((maxLeaf == None or hextoint(key) < hextoint(maxLeaf[1])) and hextoint(self.key) < hextoint(key)):
-			self.moreLeaf[i1] = (ip, key)
+			self.moreLeaf[i2] = (ip, key)
 
 
 
 	def getState(self, payload):
-		for x in payload["routingTable"]:
-			for y in x:
-				if(y != None):
-					self.updateRoutingTable(y[0], y[1])
+		# for x in payload["routingTable"]:
+		# 	for y in x:
+		# 		if(y != None):
+		self.updateRoutingTable(payload["ip"], payload["key"])
 		
 		self.updateLeafSet(payload["ip"], payload["key"])
 		
