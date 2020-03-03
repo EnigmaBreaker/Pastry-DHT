@@ -1,3 +1,5 @@
+import math
+
 def proximityDistance(x1, y1, x2, y2):
 	return max(abs(x1 - x2), abs(y1 - y2))
 
@@ -38,3 +40,30 @@ def findmax(arr):
 			ind = i
 	return output, ind
 
+def findClosest(valid, key):
+	minDistance = math.inf 
+	minNode = None
+
+	for node in valid:
+		if(abs(hextoint(node[1]) - hextoint(key)) < minDistance):
+			minNode = node
+			minDistance = abs(hextoint(node[1]) - hextoint(key))
+
+	return minNode
+
+def findProximityClosest(arr, x, y):
+	output = None
+	mindis = math.inf 
+	minind = -1
+	for i, a in enumerate(arr):
+		if(a == None):
+			continue
+		ip, key = a
+		# print(ip, key)
+		dis = proximityDistance(ip[0], ip[1], x, y)
+		if(dis < mindis):
+			mindis = dis
+			output = (ip, key)
+			minind = i
+
+	return output, minind

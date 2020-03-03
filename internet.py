@@ -7,6 +7,7 @@ class Internet:
 			n += 1
 		self.grid = [[None for x in range(n)] for y in range(n)]
 		self.ip_data = {}
+		self.key_data = {}
 		self.n = n
 
 	def __scanring(self, x, y, i):
@@ -22,7 +23,7 @@ class Internet:
 			# print(curr_x, curr_y)
 
 			if (curr_x, curr_y) in self.ip_data:
-				return (curr_x, curr_y)
+				return ((curr_x, curr_y), self.ip_data[(curr_x, curr_y)].key)
 
 		for j in range(1, 2*i + 1):
 			curr_x = x2
@@ -31,7 +32,7 @@ class Internet:
 			# print(curr_x, curr_y)
 
 			if (curr_x, curr_y) in self.ip_data:
-				return (curr_x, curr_y)
+				return ((curr_x, curr_y), self.ip_data[(curr_x, curr_y)].key)
 
 		for j in range(1, 2*i + 1):
 			curr_x = (x2 - j)%self.n
@@ -40,7 +41,7 @@ class Internet:
 			# print(curr_x, curr_y)
 
 			if (curr_x, curr_y) in self.ip_data:
-				return (curr_x, curr_y)
+				return ((curr_x, curr_y), self.ip_data[(curr_x, curr_y)].key)
 
 		for j in range(1, 2*i):
 			curr_x = x1
@@ -49,7 +50,7 @@ class Internet:
 			# print(curr_x, curr_y)
 
 			if (curr_x, curr_y) in self.ip_data:
-				return (curr_x, curr_y)
+				return ((curr_x, curr_y), self.ip_data[(curr_x, curr_y)].key)
 		return None
 
 
@@ -62,6 +63,10 @@ class Internet:
 
 		return None
 		
+	def getRandomNode(self):
+		ip = random.choice(list(self.ip_data.keys()))
+		return self.ip_data[ip]
+
 	def getNeighbours(self, ip):
 		return self.ip_data[ip].sendNeighbours()
 
@@ -76,9 +81,15 @@ class Internet:
 		self.ip_data[(x, y)] = node
 		return x, y
 
-	def sendmsg(self, ip, msg, key, source_ip):
-		return self.ip_data[ip].route(msg, key, source_ip)
+	def updateKeyData(self, node):
+		self.key_data[node.key] = node
 
+
+
+	def sendmsg(self, ip, msg, key, source_ip, hops):
+		out = self.ip_data[ip].route(msg, key, source_ip, hops)
+		# print(out)
+		return out
 	def sendRoutingTable(self, table, ip):
 		return self.ip_data[ip].getRoutingTable(table)
 
@@ -87,3 +98,11 @@ class Internet:
 
 	def sendState(self, ip, payload):
 		return self.ip_data[ip].getState(payload)
+
+	def getAllNodes(self):
+		nodes = []
+		for ip in self.ip_data:
+			nodes.append(self.ip_data[ip])
+
+		return nodes
+
